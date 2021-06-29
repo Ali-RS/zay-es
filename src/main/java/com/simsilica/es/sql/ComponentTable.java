@@ -34,6 +34,7 @@
 
 package com.simsilica.es.sql;
 
+import java.lang.reflect.Constructor;
 import java.sql.*;
 import java.util.*;
 
@@ -71,6 +72,14 @@ public class ComponentTable<T extends EntityComponent> {
         this.type = type;
         this.fields = fields;
         this.tableName = type.getSimpleName().toUpperCase();
+
+        try {
+            Constructor<T> noArgConstructor = type.getDeclaredConstructor();
+            noArgConstructor.setAccessible(true);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException("Component table requires a no-arg constructor, but class "
+                    + type.getName() + " lacks one.");
+        }
 
         List<String> names = new ArrayList<String>();        
         for( FieldType t : fields ) {
