@@ -35,6 +35,7 @@
 package com.simsilica.es.sql;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.*;
 
@@ -64,6 +65,7 @@ public class ComponentTable<T extends EntityComponent> {
     private FieldType[] fields;
     private String tableName;
     private String[] dbFieldNames;
+    private Constructor<T> constructor;
     
     private String insertSql;
     private String updateSql;
@@ -74,8 +76,8 @@ public class ComponentTable<T extends EntityComponent> {
         this.tableName = type.getSimpleName().toUpperCase();
 
         try {
-            Constructor<T> noArgConstructor = type.getDeclaredConstructor();
-            noArgConstructor.setAccessible(true);
+            constructor = type.getDeclaredConstructor();
+            constructor.setAccessible(true);
         } catch (NoSuchMethodException e) {
             throw new RuntimeException("Component table requires a no-arg constructor, but class "
                     + type.getName() + " lacks one.");
@@ -320,7 +322,7 @@ public class ComponentTable<T extends EntityComponent> {
         try {
             if( rs.next() ) {
                 int index = 1;
-                T target = type.newInstance();
+                T target = constructor.newInstance();
                 for( FieldType t : fields ) {
                     index = t.load(target, rs, index);
                 }
@@ -331,6 +333,8 @@ public class ComponentTable<T extends EntityComponent> {
         } catch( InstantiationException e ) {
             throw new RuntimeException("Error in table mapping", e);
         } catch( IllegalAccessException e ) {
+            throw new RuntimeException("Error in table mapping", e);
+        } catch (InvocationTargetException e) {
             throw new RuntimeException("Error in table mapping", e);
         } finally {
             rs.close();
@@ -538,7 +542,7 @@ public class ComponentTable<T extends EntityComponent> {
         try {
             while( rs.next() ) {
                 int index = 1;
-                T target = type.newInstance();
+                T target = constructor.newInstance();
                 for( FieldType t : fields ) {
                     index = t.load(target, rs, index);
                 }
@@ -550,6 +554,8 @@ public class ComponentTable<T extends EntityComponent> {
         } catch( InstantiationException e ) {
             throw new RuntimeException("Error in table mapping", e);
         } catch( IllegalAccessException e ) {
+            throw new RuntimeException("Error in table mapping", e);
+        } catch (InvocationTargetException e) {
             throw new RuntimeException("Error in table mapping", e);
         } finally {
             rs.close();
